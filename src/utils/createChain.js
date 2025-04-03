@@ -7,8 +7,6 @@ const createChain = () => {
 
   let state = EXEC_STATE.fulfilled;
   let exec = true;
-  // 拒绝次数
-  let rejectedCount = 0;
 
   const formatExecAndSetState = () => {
     exec = exec ?? true;
@@ -27,24 +25,16 @@ const createChain = () => {
       if (typeof exec !== "boolean") {
         return this;
       }
-
-      switch (state) {
-        case EXEC_STATE.pending:
-          exec = handler();
-          formatExecAndSetState();
-          break;
-        case EXEC_STATE.fulfilled:
-          break;
-        case EXEC_STATE.rejected:
-          rejectedCount++;
+      if (state === EXEC_STATE.pending) {
+        exec = handler();
+        formatExecAndSetState();
       }
 
       return this;
     },
     and: function () {
-      if (state === EXEC_STATE.rejected && rejectedCount > 0) {
+      if (state === EXEC_STATE.rejected) {
         state = EXEC_STATE.pending;
-        rejectedCount = 0;
       }
       return this;
     },
@@ -55,8 +45,6 @@ const createChain = () => {
     start: function () {
       exec = true;
       state = EXEC_STATE.pending;
-      rejectedCount = 0;
-
       return this;
     }
   };

@@ -1,5 +1,5 @@
 import { ref, shallowRef } from "vue";
-import { Exception } from "@/uitls/exception.js";
+import { Exception } from "@/utils/exception.js";
 
 export const useInvokeFn = (fn) => {
   const data = shallowRef(null);

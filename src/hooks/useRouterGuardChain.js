@@ -1,4 +1,23 @@
-import createChain from "@/uitls/createChain";
+import createChain from "@/utils/createChain";
+import { useToast } from "@/hooks/useToast.js";
+
+const toast = useToast();
+
+// 路由数据加载弹窗
+const loadingToastHandler = () => {
+  function before() {
+    toast.loading();
+  }
+
+  function after() {
+    toast.end();
+  }
+
+  return {
+    before,
+    after
+  };
+};
 
 // 认证权限
 const authorizationHandler = () => {
@@ -24,6 +43,7 @@ const authorizationHandler = () => {
 export const useRouterGuardChain = () => {
   const { instance: chain } = createChain();
 
+  const _loadingToastHandler = loadingToastHandler();
   const _authorizationHandler = authorizationHandler();
 
   let invoke = null;
@@ -47,6 +67,10 @@ export const useRouterGuardChain = () => {
       invoke = (handler) => handler["after"]?.(to, router);
       return true;
     });
+  };
+
+  chain.toast = function () {
+    return chain.invoke(() => invoke(_loadingToastHandler));
   };
 
   chain.authorization = function () {

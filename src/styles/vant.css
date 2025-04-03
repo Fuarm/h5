@@ -1,0 +1,4 @@
+:root:root {
+    --van-primary-color: var(--cm-primary-color);
+    --van-success-color: var(--cm-success-color);
+}

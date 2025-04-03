@@ -1,5 +1,6 @@
 import axios from "axios";
-import { NetworkException, RequestException } from "@/uitls/exception.js";
+import delay from "lodash/delay";
+import { NetworkException, RequestException } from "@/utils/exception.js";
 import { useInvokeFn } from "@/hooks/useInvokeFn.js";
 import { useUserStore } from "@/store/useUserStore.js";
 
@@ -7,7 +8,7 @@ const errorEnum = {
   ERR_NETWORK: "网络异常，请检查您的网络连接是否正常!"
 };
 
-const { invoke } = useInvokeFn(useUserStore);
+const { invoke } = useInvokeFn(() => useUserStore());
 
 // 错误处理
 const errorHandler = (error) => {
@@ -15,8 +16,8 @@ const errorHandler = (error) => {
   let exception = RequestException;
 
   switch (error.code) {
-    case 401:
-      invoke.apply()?.logout();
+    case 400:
+      delay(() => invoke.apply()?.logout(), 1500);
       break;
     case "ERR_NETWORK":
       exception = NetworkException;
