@@ -1,18 +1,18 @@
 import { useToast } from "@/hooks/useToast.js";
-import vDebounce from "@/directives/vDebounce.js";
 
 const toast = useToast();
 
 export class Exception extends Error {
-  constructor(message, name = "Exception") {
+  constructor(message, name = "Exception", stack = null) {
     super(message); // 继承 Error 的 message 属性
     this.name = name; // 自定义错误类型名称
+    this.stack = stack || this.stack;
 
     Object.setPrototypeOf(this, new.target.prototype); // 解决继承链问题
   }
 
-  static of(message) {
-    return new this(message); // 让子类调用时返回正确的实例
+  static of(message, stack = null, ...args) {
+    return new this(message, stack, ...args); // 让子类调用时返回正确的实例
   }
 
   static asLog(e, ...logs) {
@@ -20,8 +20,8 @@ export class Exception extends Error {
       case e instanceof Exception:
         e.log(...logs);
         break;
-      case this.prototype instanceof Exception && !(this.prototype instanceof RequestException):
-        this.log(e, ...logs, this.name);
+      case this.prototype instanceof Exception:
+        this.log(e, ...logs);
         break;
       case typeof e === "string":
         Exception.log({ message: e }, ...logs);
@@ -41,7 +41,7 @@ export class Exception extends Error {
 
   /** 静态方法调用 */
   static log(e, ...logs) {
-    console.error(...logs, e);
+    console.error(...logs, e.toString());
     toast.fail(e.message || "系统未知异常");
 
     // 埋点上传，日志
@@ -50,53 +50,40 @@ export class Exception extends Error {
 
   /** 实例方法调用 */
   log(...logs) {
-    if (this.name === "RequestException") return;
     Exception.log(this, ...logs); // 复用静态方法
   }
 }
 
 export class RequestException extends Exception {
-  constructor(message = "请求异常", name = "RequestException") {
-    super(message, name); // 继承 Error 的 message 属性
-  }
-}
-
-export class ValidException extends Exception {
-  constructor(message = "校验异常") {
-    super(message, "ValidException");
-  }
-}
-
-export class BizException extends Exception {
-  constructor(message = "业务异常") {
-    super(message, "BizException");
+  constructor(message = "请求异常", stack, name = "RequestException") {
+    super(message, name, stack); // 继承 Error 的 message 属性
   }
 }
 
 /** 网络异常 */
 export class NetworkException extends RequestException {
-  constructor(message = "网络异常") {
-    super(message, "NetworkException");
+  constructor(message = "网络异常", stack) {
+    super(message, stack, "NetworkException");
   }
 }
 
 export class RouterException extends Exception {
-  constructor(message = "路由异常") {
-    super(message, "RouterException");
+  constructor(message = "路由异常", stack) {
+    super(message, "RouterException", stack);
   }
 }
 
-export class WXException extends Exception {
-  constructor(message = "微信SDK异常") {
-    super(message, "WXException");
+export class WeChatException extends Exception {
+  constructor(message = "微信SDK异常", stack) {
+    super(message, "WeChatException", stack);
   }
 }
 
 // 全局异常处理
 export const globalExceptionHandle = (app) => {
   // vue 异常
-  app.config.errorHandler = (error, instance, info) => {
-    Exception.asLog(error, "Vue 异常(%s):", instance?.$options?.name || "匿名组件", info);
+  app.config.errorHandler = (error, instance) => {
+    Exception.asLog(error, "Vue 异常(%s):", instance?.$options?.name || "匿名组件");
   };
 
   window.addEventListener("unhandledrejection", (event) => {

@@ -13,19 +13,19 @@ const { invoke } = useInvokeFn(() => useUserStore());
 // 错误处理
 const errorHandler = (error) => {
   const message = errorEnum[error.code] || error.message || "系统服务异常";
-  let exception = RequestException;
+  let Exception = RequestException;
 
   switch (error.code) {
     case 400:
       delay(() => invoke.apply()?.logout(), 1500);
       break;
     case "ERR_NETWORK":
-      exception = NetworkException;
+      Exception = NetworkException;
       break;
   }
 
-  exception.log({ ...error.stack, message }, "%s：%s", exception.name, message);
-  throw exception.of(message);
+  // 抛出异常
+  throw Exception.of(message, error.stack);
 };
 
 // 响应拦截错误处理
